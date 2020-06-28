@@ -2,6 +2,7 @@ package com.dermentli;
 
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -23,8 +24,9 @@ public class Bot extends TelegramLongPollingBot {
             // Set variables
             String message_text = update.getMessage().getText();
             long chat_id = update.getMessage().getChatId();
-
+            System.out.println(update.getCallbackQuery().getChatInstance());
             if (message_text.equals("/start")) {
+                System.out.println("start was pressed");
                 SendMessage message = new SendMessage() // Create a message object object
                         .setChatId(chat_id)
                         .setText("Пожалуйста выберите язык программирования");
@@ -37,7 +39,7 @@ public class Bot extends TelegramLongPollingBot {
                 // Create a keyboard row
                 KeyboardRow row = new KeyboardRow();
                 // Set each button, you can also use KeyboardButton objects if you need something else than text
-                row.add(EmojiParser.parseToUnicode(":coffee: Java"));
+                row.add(EmojiParser.parseToUnicode(":coffee: Java2"));
                 row.add(EmojiParser.parseToUnicode(":shield: HTML+CSS"));
                 row.add(EmojiParser.parseToUnicode(":atom_symbol: ReactJS"));
                 row.add(EmojiParser.parseToUnicode(":smiley_cat: NodeJS"));
@@ -207,14 +209,8 @@ public class Bot extends TelegramLongPollingBot {
                 session.stop();
             }
 
-//            SendMessage message = new SendMessage() // Create a message object object
-//                    .setChatId(chat_id)
-//                    .setText(message_text);
-//            try {
-//                execute(message); // Sending our message object to user
-//            } catch (TelegramApiException e) {
-//                e.printStackTrace();
-//            }
+        } else if (update.hasCallbackQuery()) {
+
         }
     }
 
