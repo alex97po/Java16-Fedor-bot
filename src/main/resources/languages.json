@@ -1,0 +1,7 @@
+{
+  ":coffee: Java": "language-java",
+  ":shield: HTML+CSS": "language-html+css",
+  ":atom_symbol: ReactJS": "language-reactjs",
+  ":smiley_cat: NodeJS": "language-nodeja",
+  ":no_entry_sign: STOP": "stop"
+}
