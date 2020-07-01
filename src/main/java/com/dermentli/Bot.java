@@ -28,7 +28,7 @@ public class Bot extends TelegramLongPollingBot {
 
     public static final String LANGUAGE_MENU = "src/main/resources/languages.json";
     public static final String TOPICS = "src/main/resources/%s-topics.json";
-    public static final String JAVA_QUESTIONS = "src/main/resources/topic-java-%s.json";
+    public static final String JAVA_QUESTIONS = "src/main/resources/%s-%s-question.json";
 
 
     /** Main method for events to handle
@@ -53,9 +53,12 @@ public class Bot extends TelegramLongPollingBot {
                 long chatID = update.getCallbackQuery().getMessage().getChatId();
                 String file = String.format(TOPICS, callbackData[1]);
                 showMenuParts(file, "Please choose topic", chatID);
+            } else if (callbackData[0].equals("topic")) {
+                long chatID = update.getCallbackQuery().getMessage().getChatId();
+                String file = String.format(TOPICS, callbackData[1], callbackData[2]);
+
             }
-            log.info("callback is received");
-            log.info(update.getCallbackQuery().getData());
+
         }
     }
 
@@ -91,6 +94,13 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /** Designed to bring main interface to bot
+     *
+     * @param file json file with buttons and callback data
+     * @param text bot message content
+     * @param chatID the unique ID of chat to send messages
+     * @throws IOException possible exception to be generated
+     */
     private void showMenuParts(String file, String text, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
