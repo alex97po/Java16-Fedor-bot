@@ -1,0 +1,26 @@
+[
+  {
+    "name": "ООП",
+    "callback": "topic-java-oop"
+  },
+  {
+    "name": "Классы и методы",
+    "callback": "topic-java-classnmethods"
+  },
+  {
+    "name": "Устройство Java",
+    "callback": "topic-java-structure"
+  },
+  {
+    "name": "Примитивы",
+    "callback": "topic-java-primitives"
+  },
+  {
+    "name": "Коллекции",
+    "callback": "topic-java-collections"
+  },
+  {
+    "name": "Многопоточность",
+    "callback": "topic-java-multithreading"
+  }
+]
