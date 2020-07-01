@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Spliterator;
 
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
@@ -111,11 +112,8 @@ public class Bot extends TelegramLongPollingBot {
         // adding first row of buttons
         List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
         // adding buttons to row
-        buttons.forEach(i -> {
-            buttonsRow.add(new InlineKeyboardButton().setText(i.getName()).setCallbackData(i.getCallback()));
-//            log.info(i.getName());
-//            log.info(i.getCallback());
-        });
+        Spliterator<Button> spliterator = buttons.spliterator();
+        while(spliterator.tryAdvance((n) -> buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()))));
         // adding first row to button list
         buttonsInline.add(buttonsRow);
         // creating markup
