@@ -1,6 +1,5 @@
 package com.dermentli;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,13 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
 
+import static com.dermentli.Constants.*;
+
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
-
-    public static final String LANGUAGE_MENU = "src/main/resources/languages.json";
-    public static final String TOPICS = "src/main/resources/%s-topics.json";
-    public static final String JAVA_QUESTIONS = "src/main/resources/%s-%s-question.json";
-
 
     /** Main method for events to handle
      *
@@ -40,58 +36,28 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            if (update.getMessage().getText().equals("/start") || update.getMessage().getText().equals("START")) {
+            String updMessage = update.getMessage().getText();
+            if (updMessage.equals("/start")) {
                 long chatID = update.getMessage().getChatId();
-                setMenu(chatID);
-                showMenuParts(LANGUAGE_MENU, "Please choose Language to continue", chatID);
+                showMenu(LANGUAGE_MENU, MAIN_MENU_MESSAGE, chatID);
+            } else if (updMessage.equals("STOP")) {
+                BotSession session = ApiContext.getInstance(BotSession.class);
+                session.stop();
             }
-        } else if (update.hasMessage() && update.getMessage().getText().equals("STOP")) {
-            BotSession session = ApiContext.getInstance(BotSession.class);
-            session.stop();
         } else if (update.hasCallbackQuery()) {
             String[] callbackData = update.getCallbackQuery().getData().split("-");
-            if (callbackData[0].equals("language")) {
-                long chatID = update.getCallbackQuery().getMessage().getChatId();
-                String file = String.format(TOPICS, callbackData[1]);
-                showMenuParts(file, "Please choose topic", chatID);
-            } else if (callbackData[0].equals("topic")) {
-                long chatID = update.getCallbackQuery().getMessage().getChatId();
-                String file = String.format(TOPICS, callbackData[1], callbackData[2]);
-
+            long chatID = update.getCallbackQuery().getMessage().getChatId();
+            switch (callbackData[0]) {
+                // Show topics
+                case "language":
+                    String file = String.format(TOPICS, callbackData[1]);
+                    showMenu(file, MAIN_MENU_MESSAGE, chatID);
+                    break;
+                // Show question
+                case "topic":
+                    file = String.format(QUESTIONS, callbackData[1], callbackData[2]);
+                    showQuestion(file, chatID, "default");
             }
-
-        }
-    }
-
-    /** This method is designed to create bottom menu of bot and enable START/STOP buttons
-     *
-     * @param chatID the unique ID of chat to send messages
-     */
-    private void setMenu(long chatID) {
-        // creating keyboard
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        // making it small
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        // creating keybord rows
-        List<KeyboardRow> keyboard = new ArrayList<>();
-        // adding first row keyboard
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // adding two buttons
-        keyboardFirstRow.add("START");
-        keyboardFirstRow.add("STOP");
-        // adding rows to keyboard
-        keyboard.add(keyboardFirstRow);
-        // setting List<KeyboardRow> to our keyboard
-        replyKeyboardMarkup.setKeyboard(keyboard);
-        //creating message
-        SendMessage message = new SendMessage() // Create a message object object
-                .setChatId(chatID)
-                .setText("Main Menu")
-                .setReplyMarkup(replyKeyboardMarkup);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
         }
     }
 
@@ -102,20 +68,22 @@ public class Bot extends TelegramLongPollingBot {
      * @param chatID the unique ID of chat to send messages
      * @throws IOException possible exception to be generated
      */
-    private void showMenuParts(String file, String text, long chatID) throws IOException {
+    private void showMenu(String file, String text, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(file), new TypeReference<List<Button>>(){});
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding first row of buttons
-        List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-        // adding buttons to row
+        // adding iterator for buttons
         Spliterator<Button> spliterator = buttons.spliterator();
-        while(spliterator.tryAdvance((n) -> buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()))));
-        // adding first row to button list
-        buttonsInline.add(buttonsRow);
+        while(spliterator.tryAdvance((n) -> {
+            // adding row of buttons
+            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+            // adding row to button list
+            buttonsInline.add(buttonsRow);
+        }));
         // creating markup
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
@@ -130,6 +98,39 @@ public class Bot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showQuestion (String file, long chatID, String type) throws IOException {
+        // creating object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        // reading list of objects from JSON array string
+        List<Button> buttons = objectMapper.readValue(new File(file), new TypeReference<List<Button>>(){});
+        // creating buttons list
+        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
+        // adding iterator for buttons
+        Spliterator<Button> spliterator = buttons.spliterator();
+        while(spliterator.tryAdvance((n) -> {
+            // adding row of buttons
+            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+            // adding row to button list
+            buttonsInline.add(buttonsRow);
+        }));
+        // creating markup
+        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
+        // setting buttons list to our markup
+        markupKeyboard.setKeyboard(buttonsInline);
+        //creating message
+        SendMessage message = new SendMessage() // Create a message object object
+                .setChatId(chatID)
+                .setText(text)
+                .setReplyMarkup(markupKeyboard);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

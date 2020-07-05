@@ -17,6 +17,6 @@
     },
     {
       "name": "STOP",
-      "callback": "language-stop"
+      "callback": "stop"
     }
   ]
