@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.generics.BotSession;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
@@ -75,7 +76,7 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void showMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
+    private void getMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
         //creating message
         SendMessage message = new SendMessage() // Create a message object object
                 .setChatId(chatID)
@@ -96,10 +97,10 @@ public class Bot extends TelegramLongPollingBot {
         // changing sorting based on order desire
         switch (sorting) {
             case "likes":
-                questions.sort(new QuestionCompLike());
+                questions.sort(((o1, o2) -> Comparator.comparingInt(Question::getLikes).compare(o2, o1)));
                 break;
             case "muscles":
-                questions.sort(new QuestionCompMuscle());
+                questions.sort(((o1, o2) -> Comparator.comparingInt(Question::getDifficulty).compare(o2, o1)));
                 break;
         }
 
@@ -124,7 +125,7 @@ public class Bot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        showMessage(text, markupKeyboard, chatID);
+        getMessage(text, markupKeyboard, chatID);
     }
 
     private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
@@ -155,7 +156,7 @@ public class Bot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        showMessage(answer, markupKeyboard, chatID);
+        getMessage(answer, markupKeyboard, chatID);
     }
 
     private void getMenu(String text, String sButtons, long chatID) throws IOException {
@@ -178,7 +179,7 @@ public class Bot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        showMessage(text, markupKeyboard, chatID);
+        getMessage(text, markupKeyboard, chatID);
     }
 
     @Override
