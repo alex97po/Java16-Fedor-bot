@@ -42,6 +42,7 @@ public class Bot extends TelegramLongPollingBot {
         String sorting;
         int questionOrderNumber;
         long chatID;
+        int questionID;
 
         if (update.hasMessage()) {
             String updMessage = update.getMessage().getText();
@@ -71,6 +72,14 @@ public class Bot extends TelegramLongPollingBot {
                     questionOrderNumber = Integer.parseInt(callbackData[2]) + 1;
                     sorting = callbackData[5];
                     getQuestion(file, questionOrderNumber, sorting, chatID);
+                    break;
+                case "answer":
+                    file = String.format(QUESTIONS, callbackData[3], callbackData[4]);
+                    questionOrderNumber = Integer.parseInt(callbackData[2]);
+                    questionID = Integer.parseInt(callbackData[1]);
+                    sorting = callbackData[5];
+                    getAnswer(file, questionID, questionOrderNumber, sorting, chatID);
+                    break;
 
             }
         }
