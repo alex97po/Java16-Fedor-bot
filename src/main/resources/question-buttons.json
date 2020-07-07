@@ -1,0 +1,30 @@
+[
+  {
+    "name": "heart",
+    "callback": "question-like"
+  },
+  {
+    "name": "muscle",
+    "callback": "question-muscle"
+  },
+  {
+    "name": "answer",
+    "callback": "question-answer"
+  },
+  {
+    "name": "next",
+    "callback": "question-next"
+  },
+  {
+    "name": "back",
+    "callback": "question-back"
+  },
+  {
+    "name": "STOP",
+    "callback": "stop"
+  },
+  {
+    "name": "help",
+    "callback": "question-help"
+  }
+]

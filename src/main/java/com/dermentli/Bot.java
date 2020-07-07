@@ -3,6 +3,7 @@ package com.dermentli;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.internal.cglib.core.$VisibilityPredicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.ApiContext;
@@ -39,7 +40,7 @@ public class Bot extends TelegramLongPollingBot {
             String updMessage = update.getMessage().getText();
             if (updMessage.equals("/start")) {
                 long chatID = update.getMessage().getChatId();
-                showMenu(LANGUAGE_MENU, MAIN_MENU_MESSAGE, chatID);
+                showMessage(MAIN_MENU_MESSAGE, LANGUAGE_MENU, chatID, false, 0, "menu");
             } else if (updMessage.equals("STOP")) {
                 BotSession session = ApiContext.getInstance(BotSession.class);
                 session.stop();
@@ -51,43 +52,73 @@ public class Bot extends TelegramLongPollingBot {
                 // Show topics
                 case "language":
                     String file = String.format(TOPICS, callbackData[1]);
-                    showMenu(file, MAIN_MENU_MESSAGE, chatID);
+                    showMessage(MAIN_MENU_MESSAGE, file, chatID, false, );
                     break;
                 // Show question
                 case "topic":
                     file = String.format(QUESTIONS, callbackData[1], callbackData[2]);
-                    showQuestion(file, chatID, "default");
+                    getQuestion(file, chatID, "default", 1);
+                    break;
             }
         }
     }
 
-    /** Designed to bring main interface to bot
+    /**
      *
-     * @param file json file with buttons and callback data
-     * @param text bot message content
-     * @param chatID the unique ID of chat to send messages
-     * @throws IOException possible exception to be generated
+     * @param sText
+     * @param sButtons
+     * @param chatID
+     * @param singleLineMenu
+     * @throws IOException
      */
-    private void showMenu(String file, String text, long chatID) throws IOException {
+    private void showMessage(String sText, String sButtons, long chatID, boolean singleLineMenu, int questionID, String type) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
-        List<Button> buttons = objectMapper.readValue(new File(file), new TypeReference<List<Button>>(){});
+        List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
         // adding iterator for buttons
         Spliterator<Button> spliterator = buttons.spliterator();
-        while(spliterator.tryAdvance((n) -> {
+        // determine single line or multiline menu
+        if (singleLineMenu) {
             // adding row of buttons
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+            while(spliterator.tryAdvance((n) -> {
+                buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+            }));
             // adding row to button list
             buttonsInline.add(buttonsRow);
-        }));
+        } else {
+            while(spliterator.tryAdvance((n) -> {
+                // adding row of buttons
+                List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+                buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+                // adding row to button list
+                buttonsInline.add(buttonsRow);
+            }));
+        }
         // creating markup
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
+        //getting text for message
+        List<Question> questions = objectMapper.readValue(new File(sText), new TypeReference<List<Question>>(){});
+        String text;
+        switch (type) {
+            case "menu":
+                text = sText;
+                break;
+            case "question":
+                text = questions.get(questionID-1).getContent();
+                break;
+            case "answer":
+                text = questions.get(questionID-1).getAnswer();
+                break;
+            default:
+                text = null;
+                break;
+        }
         //creating message
         SendMessage message = new SendMessage() // Create a message object object
                 .setChatId(chatID)
@@ -100,37 +131,21 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void showQuestion (String file, long chatID, String type) throws IOException {
-        // creating object mapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        // reading list of objects from JSON array string
-        List<Button> buttons = objectMapper.readValue(new File(file), new TypeReference<List<Button>>(){});
-        // creating buttons list
-        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding iterator for buttons
-        Spliterator<Button> spliterator = buttons.spliterator();
-        while(spliterator.tryAdvance((n) -> {
-            // adding row of buttons
-            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
-            // adding row to button list
-            buttonsInline.add(buttonsRow);
-        }));
-        // creating markup
-        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
-        // setting buttons list to our markup
-        markupKeyboard.setKeyboard(buttonsInline);
-        //creating message
-        SendMessage message = new SendMessage() // Create a message object object
-                .setChatId(chatID)
-                .setText(text)
-                .setReplyMarkup(markupKeyboard);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+    private void getQuestion(String questionFile, long chatID, String type, int questionID) throws IOException {
+        switch (type) {
+            case "default":
+                showMessage(questionFile, QUESTION_MENU, chatID, true, questionID, true);
+                break;
+            case "favorite":
+                //
+                break;
+            case "hard":
+                //
+                break;
+            case "random":
+                //
+                break;
         }
-
     }
 
     @Override
