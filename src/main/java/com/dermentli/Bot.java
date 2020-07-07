@@ -59,6 +59,7 @@ public class Bot extends TelegramLongPollingBot {
             switch (callbackData[0]) {
                 // Show topics
                 case "language":
+                case "back":
                     file = String.format(TOPICS, callbackData[1]);
                     getMenu(MAIN_MENU_MESSAGE, file, chatID);
                     break;
@@ -80,7 +81,13 @@ public class Bot extends TelegramLongPollingBot {
                     sorting = callbackData[5];
                     getAnswer(file, questionID, questionOrderNumber, sorting, chatID);
                     break;
-
+                case "help":
+                    getMessage(HELP_PAGE, null, chatID);
+                    break;
+                case "stop":
+                    BotSession session = ApiContext.getInstance(BotSession.class);
+                    session.stop();
+                    break;
             }
         }
     }

@@ -8,4 +8,6 @@ public class Constants {
     public static final String QUESTIONS = "src/main/resources/%s-%s-questions.json";
 
     public static final String MAIN_MENU_MESSAGE = "Please choose topic";
+    public static final String HELP_PAGE = "сердечко - понравился вопрос, мускул - вопрос показался сложным, \"Ответ\" - чтобы увидеть ответ на вопрос";
+
 }
