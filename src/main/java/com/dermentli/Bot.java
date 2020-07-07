@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.stream.Collectors;
 
 import static com.dermentli.Constants.*;
 
@@ -36,42 +37,128 @@ public class Bot extends TelegramLongPollingBot {
     @SneakyThrows
     @Override
     public void onUpdateReceived(Update update) {
+        String file;
+        String sorting;
+        int questionOrderNumber;
+        long chatID;
+
         if (update.hasMessage()) {
             String updMessage = update.getMessage().getText();
             if (updMessage.equals("/start")) {
-                long chatID = update.getMessage().getChatId();
-                showMessage(MAIN_MENU_MESSAGE, LANGUAGE_MENU, chatID, false, 0, "menu");
+                chatID = update.getMessage().getChatId();
+                getMenu(MAIN_MENU_MESSAGE, LANGUAGE_MENU, chatID);
             } else if (updMessage.equals("STOP")) {
                 BotSession session = ApiContext.getInstance(BotSession.class);
                 session.stop();
             }
         } else if (update.hasCallbackQuery()) {
             String[] callbackData = update.getCallbackQuery().getData().split("-");
-            long chatID = update.getCallbackQuery().getMessage().getChatId();
+            chatID = update.getCallbackQuery().getMessage().getChatId();
             switch (callbackData[0]) {
                 // Show topics
                 case "language":
-                    String file = String.format(TOPICS, callbackData[1]);
-                    showMessage(MAIN_MENU_MESSAGE, file, chatID, false, );
+                    file = String.format(TOPICS, callbackData[1]);
+                    getMenu(MAIN_MENU_MESSAGE, file, chatID);
                     break;
                 // Show question
                 case "topic":
                     file = String.format(QUESTIONS, callbackData[1], callbackData[2]);
-                    getQuestion(file, chatID, "default", 1);
+                    getQuestion(file, 1,"default", chatID);
                     break;
+                case "next":
+                    file = String.format(QUESTIONS, callbackData[3], callbackData[4]);
+                    questionOrderNumber = Integer.parseInt(callbackData[2]) + 1;
+                    sorting = callbackData[5];
+                    getQuestion(file, questionOrderNumber, sorting, chatID);
+
             }
         }
     }
 
-    /**
-     *
-     * @param sText
-     * @param sButtons
-     * @param chatID
-     * @param singleLineMenu
-     * @throws IOException
-     */
-    private void showMessage(String sText, String sButtons, long chatID, boolean singleLineMenu, int questionID, String type) throws IOException {
+    private void showMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
+        //creating message
+        SendMessage message = new SendMessage() // Create a message object object
+                .setChatId(chatID)
+                .setText(text)
+                .setReplyMarkup(buttons);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getQuestion(String file, int questionOrderNumber, String sorting, long chatID) throws IOException {
+        // creating object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        // reading list of objects from JSON array string
+        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
+        // changing sorting based on order desire
+        switch (sorting) {
+            case "likes":
+                questions.sort(new QuestionCompLike());
+                break;
+            case "muscles":
+                questions.sort(new QuestionCompMuscle());
+                break;
+        }
+
+        String text = questions.get(questionOrderNumber-1).getContent();
+        int questionID = questions.get(questionOrderNumber-1).getId();
+        String language = questions.get(questionOrderNumber-1).getLanguage();
+        String subject = questions.get(questionOrderNumber-1).getSubject();
+        // reading list of question's buttons from JSON array string
+        List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
+        // creating buttons list
+        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
+        // adding iterator for buttons
+        Spliterator<Button> spliterator = buttons.spliterator();
+        // adding row of buttons
+        List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+        while(spliterator.tryAdvance((n) -> {
+            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback() + "-" + questionID + "-" + questionOrderNumber + "-" + language + "-" + subject + "-" + sorting));
+        }));
+        // adding row to button list
+        buttonsInline.add(buttonsRow);
+        // creating markup
+        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
+        // setting buttons list to our markup
+        markupKeyboard.setKeyboard(buttonsInline);
+        showMessage(text, markupKeyboard, chatID);
+    }
+
+    private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
+        // creating object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        // reading list of objects from JSON array string
+        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
+        List<Question> question = questions.stream()
+                .filter(line -> line.getId() == questionID)
+                .collect(Collectors.toList());
+        String answer = question.get(0).getAnswer();
+        String language = questions.get(questionOrderNumber-1).getLanguage();
+        String subject = questions.get(questionOrderNumber-1).getSubject();
+        // reading list of question's buttons from JSON array string
+        List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
+        // creating buttons list
+        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
+        // adding iterator for buttons
+        Spliterator<Button> spliterator = buttons.spliterator();
+        // adding row of buttons
+        List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+        while(spliterator.tryAdvance((n) -> {
+            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback() + "-" + questionID + "-" + questionOrderNumber + "-" + language + "-" + subject + "-" + sorting));
+        }));
+        // adding row to button list
+        buttonsInline.add(buttonsRow);
+        // creating markup
+        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
+        // setting buttons list to our markup
+        markupKeyboard.setKeyboard(buttonsInline);
+        showMessage(answer, markupKeyboard, chatID);
+    }
+
+    private void getMenu(String text, String sButtons, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
@@ -80,72 +167,18 @@ public class Bot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
         // adding iterator for buttons
         Spliterator<Button> spliterator = buttons.spliterator();
-        // determine single line or multiline menu
-        if (singleLineMenu) {
+        while(spliterator.tryAdvance((n) -> {
             // adding row of buttons
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            while(spliterator.tryAdvance((n) -> {
-                buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
-            }));
+            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
             // adding row to button list
             buttonsInline.add(buttonsRow);
-        } else {
-            while(spliterator.tryAdvance((n) -> {
-                // adding row of buttons
-                List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-                buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
-                // adding row to button list
-                buttonsInline.add(buttonsRow);
-            }));
-        }
+        }));
         // creating markup
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        //getting text for message
-        List<Question> questions = objectMapper.readValue(new File(sText), new TypeReference<List<Question>>(){});
-        String text;
-        switch (type) {
-            case "menu":
-                text = sText;
-                break;
-            case "question":
-                text = questions.get(questionID-1).getContent();
-                break;
-            case "answer":
-                text = questions.get(questionID-1).getAnswer();
-                break;
-            default:
-                text = null;
-                break;
-        }
-        //creating message
-        SendMessage message = new SendMessage() // Create a message object object
-                .setChatId(chatID)
-                .setText(text)
-                .setReplyMarkup(markupKeyboard);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void getQuestion(String questionFile, long chatID, String type, int questionID) throws IOException {
-        switch (type) {
-            case "default":
-                showMessage(questionFile, QUESTION_MENU, chatID, true, questionID, true);
-                break;
-            case "favorite":
-                //
-                break;
-            case "hard":
-                //
-                break;
-            case "random":
-                //
-                break;
-        }
+        showMessage(text, markupKeyboard, chatID);
     }
 
     @Override

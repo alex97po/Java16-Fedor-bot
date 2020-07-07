@@ -1,23 +1,23 @@
 [
   {
     "name": "heart",
-    "callback": "question-like"
+    "callback": "like"
   },
   {
     "name": "muscle",
-    "callback": "question-muscle"
+    "callback": "muscle"
   },
   {
     "name": "answer",
-    "callback": "question-answer"
+    "callback": "answer"
   },
   {
     "name": "next",
-    "callback": "question-next"
+    "callback": "next"
   },
   {
     "name": "back",
-    "callback": "question-back"
+    "callback": "back"
   },
   {
     "name": "STOP",
@@ -25,6 +25,6 @@
   },
   {
     "name": "help",
-    "callback": "question-help"
+    "callback": "help"
   }
 ]
