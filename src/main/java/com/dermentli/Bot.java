@@ -64,7 +64,7 @@ public class Bot extends TelegramLongPollingBot {
                 // Show question
                 case "topic":
                     file = String.format(QUESTIONS, callbackData[1], callbackData[2]);
-                    getQuestion(file, 1,"default", chatID);
+                    getQuestion(file, 1,"likes", chatID);
                     break;
                 case "next":
                     file = String.format(QUESTIONS, callbackData[3], callbackData[4]);
@@ -97,15 +97,31 @@ public class Bot extends TelegramLongPollingBot {
         // changing sorting based on order desire
         switch (sorting) {
             case "likes":
-                questions.sort(((o1, o2) -> Comparator.comparingInt(Question::getLikes).compare(o2, o1)));
+                questions.sort(Comparator.comparingInt(Question::getLikes).reversed());
                 break;
             case "muscles":
-                questions.sort(((o1, o2) -> Comparator.comparingInt(Question::getDifficulty).compare(o2, o1)));
+                questions.sort(Comparator.comparingInt(Question::getDifficulty).reversed());
                 break;
         }
 
         String text = questions.get(questionOrderNumber-1).getContent();
         int questionID = questions.get(questionOrderNumber-1).getId();
+        questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, text, chatID);
+    }
+
+    private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
+        // creating object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        // reading list of objects from JSON array string
+        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
+        List<Question> question = questions.stream()
+                .filter(line -> line.getId() == questionID)
+                .collect(Collectors.toList());
+        String answer = question.get(0).getAnswer();
+        questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, answer, chatID);
+    }
+
+    private void questionBlock(List<Question> questions, int questionOrderNumber, ObjectMapper objectMapper, int questionID, String sorting, String text, long chatID) throws IOException {
         String language = questions.get(questionOrderNumber-1).getLanguage();
         String subject = questions.get(questionOrderNumber-1).getSubject();
         // reading list of question's buttons from JSON array string
@@ -126,37 +142,6 @@ public class Bot extends TelegramLongPollingBot {
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
         getMessage(text, markupKeyboard, chatID);
-    }
-
-    private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
-        // creating object mapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        // reading list of objects from JSON array string
-        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
-        List<Question> question = questions.stream()
-                .filter(line -> line.getId() == questionID)
-                .collect(Collectors.toList());
-        String answer = question.get(0).getAnswer();
-        String language = questions.get(questionOrderNumber-1).getLanguage();
-        String subject = questions.get(questionOrderNumber-1).getSubject();
-        // reading list of question's buttons from JSON array string
-        List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
-        // creating buttons list
-        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding iterator for buttons
-        Spliterator<Button> spliterator = buttons.spliterator();
-        // adding row of buttons
-        List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-        while(spliterator.tryAdvance((n) -> {
-            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback() + "-" + questionID + "-" + questionOrderNumber + "-" + language + "-" + subject + "-" + sorting));
-        }));
-        // adding row to button list
-        buttonsInline.add(buttonsRow);
-        // creating markup
-        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
-        // setting buttons list to our markup
-        markupKeyboard.setKeyboard(buttonsInline);
-        getMessage(answer, markupKeyboard, chatID);
     }
 
     private void getMenu(String text, String sButtons, long chatID) throws IOException {
