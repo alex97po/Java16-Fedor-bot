@@ -2,6 +2,8 @@ package com.dermentli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.ApiContext;
@@ -97,13 +99,22 @@ public class Bot extends TelegramLongPollingBot {
                     subject = callbackData[4];
                     file = String.format(QUESTIONS, language, subject);
                     questionID = Integer.parseInt(callbackData[1]);
-                    rate(file, questionID, true);
+                    if(isAllowedToRate(language, subject, questionID, chatID)) {
+                        rate(file, questionID, true);
+                    } else {
+                        underRate(file, questionID, true);
+                    }
+
                 case "muscle":
                     language = callbackData[3];
                     subject = callbackData[4];
                     file = String.format(QUESTIONS, language, subject);
                     questionID = Integer.parseInt(callbackData[1]);
-                    rate(file, questionID, false);
+                    if(isAllowedToRate(language, subject, questionID, chatID)) {
+                        rate(file, questionID, true);
+                    } else {
+                        underRate(file, questionID, true);
+                    }
             }
         }
     }
@@ -199,6 +210,14 @@ public class Bot extends TelegramLongPollingBot {
         getMessage(text, markupKeyboard, chatID);
     }
 
+    private boolean isAllowedToRate(String language, String subject, int questionID, long chatID) {
+        String json = USERS;
+        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+        JsonPath.
+        String author0 = JsonPath.read(document, "$.store.book[0].author");
+        return true;
+    }
+
     private void rate(String file, int questionID, boolean isLike) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
@@ -210,6 +229,22 @@ public class Bot extends TelegramLongPollingBot {
         } else {
             while(spliterator.tryAdvance((n) -> {
                 if (n.getId() == questionID) n.setDifficulty(n.getDifficulty() + 1);
+            }));
+        }
+        objectMapper.writeValue(new File(file), questions);
+    }
+
+    private void underRate(String file, int questionID, boolean isLike) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
+        Spliterator<Question> spliterator = questions.spliterator();
+        if (isLike) {
+            while(spliterator.tryAdvance((n) -> {
+                if (n.getId() == questionID) n.setLikes(n.getLikes() - 1);
+            }));
+        } else {
+            while(spliterator.tryAdvance((n) -> {
+                if (n.getId() == questionID) n.setDifficulty(n.getDifficulty() - 1);
             }));
         }
         objectMapper.writeValue(new File(file), questions);
