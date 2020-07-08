@@ -1,9 +1,7 @@
 package com.dermentli;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.internal.cglib.core.$VisibilityPredicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.ApiContext;
@@ -11,10 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.BotSession;
 
@@ -43,6 +38,8 @@ public class Bot extends TelegramLongPollingBot {
         int questionOrderNumber;
         long chatID;
         int questionID;
+        String language;
+        String subject;
 
         if (update.hasMessage()) {
             String updMessage = update.getMessage().getText();
@@ -60,22 +57,29 @@ public class Bot extends TelegramLongPollingBot {
                 // Show topics
                 case "language":
                 case "back":
-                    file = String.format(TOPICS, callbackData[1]);
+                    language = callbackData[1];
+                    file = String.format(TOPICS, language);
                     getMenu(MAIN_MENU_MESSAGE, file, chatID);
                     break;
                 // Show question
                 case "topic":
-                    file = String.format(QUESTIONS, callbackData[1], callbackData[2]);
+                    language = callbackData[1];
+                    subject = callbackData[2];
+                    file = String.format(QUESTIONS, language, subject);
                     getQuestion(file, 1,"likes", chatID);
                     break;
                 case "next":
-                    file = String.format(QUESTIONS, callbackData[3], callbackData[4]);
+                    language = callbackData[3];
+                    subject = callbackData[4];
+                    file = String.format(QUESTIONS, language, subject);
                     questionOrderNumber = Integer.parseInt(callbackData[2]) + 1;
                     sorting = callbackData[5];
                     getQuestion(file, questionOrderNumber, sorting, chatID);
                     break;
                 case "answer":
-                    file = String.format(QUESTIONS, callbackData[3], callbackData[4]);
+                    language = callbackData[3];
+                    subject = callbackData[4];
+                    file = String.format(QUESTIONS, language, subject);
                     questionOrderNumber = Integer.parseInt(callbackData[2]);
                     questionID = Integer.parseInt(callbackData[1]);
                     sorting = callbackData[5];
@@ -88,6 +92,18 @@ public class Bot extends TelegramLongPollingBot {
                     BotSession session = ApiContext.getInstance(BotSession.class);
                     session.stop();
                     break;
+                case "like":
+                    language = callbackData[3];
+                    subject = callbackData[4];
+                    file = String.format(QUESTIONS, language, subject);
+                    questionID = Integer.parseInt(callbackData[1]);
+                    rate(file, questionID, true);
+                case "muscle":
+                    language = callbackData[3];
+                    subject = callbackData[4];
+                    file = String.format(QUESTIONS, language, subject);
+                    questionID = Integer.parseInt(callbackData[1]);
+                    rate(file, questionID, false);
             }
         }
     }
@@ -181,6 +197,22 @@ public class Bot extends TelegramLongPollingBot {
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
         getMessage(text, markupKeyboard, chatID);
+    }
+
+    private void rate(String file, int questionID, boolean isLike) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
+        Spliterator<Question> spliterator = questions.spliterator();
+        if (isLike) {
+            while(spliterator.tryAdvance((n) -> {
+                if (n.getId() == questionID) n.setLikes(n.getLikes() + 1);
+            }));
+        } else {
+            while(spliterator.tryAdvance((n) -> {
+                if (n.getId() == questionID) n.setDifficulty(n.getDifficulty() + 1);
+            }));
+        }
+        objectMapper.writeValue(new File(file), questions);
     }
 
     @Override
