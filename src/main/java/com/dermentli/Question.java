@@ -9,18 +9,18 @@ public class Question {
     private String subject;
     private String content;
     private String answer;
-    private int difficulty;
+    private int muscle;
     private int likes;
 
     public Question() {
 
     }
 
-    public Question(int id, String language, String subject, int difficulty, int likes) {
+    public Question(int id, String language, String subject, int muscle, int likes) {
         this.id = id;
         this.language = language;
         this.subject = subject;
-        this.difficulty = difficulty;
+        this.muscle = muscle;
         this.likes = likes;
     }
 }

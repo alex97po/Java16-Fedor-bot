@@ -3,12 +3,9 @@ package com.dermentli;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.ReadContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -19,7 +16,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.BotSession;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -103,27 +100,18 @@ public class Bot extends TelegramLongPollingBot {
                     BotSession session = ApiContext.getInstance(BotSession.class);
                     session.stop();
                     break;
-                case "like":
-                    language = callbackData[3];
+                case "likes":
+                    language = callbackData[3].toLowerCase();
                     subject = callbackData[4];
-                    file = String.format(QUESTIONS, language, subject);
                     questionID = Integer.parseInt(callbackData[1]);
-                    if(isAllowedToRate(language, subject, questionID, chatID, true)) {
-                        rate(file, questionID, true);
-                    } else {
-                        underRate(file, questionID, true);
-                    }
-
+                    ratingAnalyzer(language, subject, questionID, chatID, true);
+                    break;
                 case "muscle":
-                    language = callbackData[3];
+                    language = callbackData[3].toLowerCase();
                     subject = callbackData[4];
-                    file = String.format(QUESTIONS, language, subject);
                     questionID = Integer.parseInt(callbackData[1]);
-                    if(isAllowedToRate(language, subject, questionID, chatID, false)) {
-                        rate(file, questionID, true);
-                    } else {
-                        underRate(file, questionID, true);
-                    }
+                    ratingAnalyzer(language, subject, questionID, chatID, false);
+                    break;
             }
         }
     }
@@ -152,7 +140,7 @@ public class Bot extends TelegramLongPollingBot {
                 questions.sort(Comparator.comparingInt(Question::getLikes).reversed());
                 break;
             case "muscles":
-                questions.sort(Comparator.comparingInt(Question::getDifficulty).reversed());
+                questions.sort(Comparator.comparingInt(Question::getMuscle).reversed());
                 break;
         }
 
@@ -227,8 +215,8 @@ public class Bot extends TelegramLongPollingBot {
         Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].idUser";
         Object test = JsonPath.read(document, jsonPath);
-        String use = test.toString();
-        if (use.equals("[]")) {
+        String value = test.toString();
+        if (value.equals("[]")) {
             log.info("Registering new user");
             usersList.add(new User(chatID));
             objectMapper.writeValue(file, usersList);
@@ -237,74 +225,53 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private boolean isAllowedToRate(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
-        // first we need to check if question is registered in json file
+    private void ratingAnalyzer(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
+        log.info("ratingAnalyzer started");
         ObjectMapper objectMapper = new ObjectMapper();
-        List<User> usersList = objectMapper.readValue(new File(USERS), new TypeReference<List<User>>() {});
+        File file = new File(USERS);
+        List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
+        String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
+        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
         Spliterator<User> spliterator = usersList.spliterator();
-        while(spliterator.tryAdvance((n) -> {
-            if (n.getIdUser() == chatID) {
-                // checking on question
-            } else {
-                if (isLike) {
-                    new User(chatID, questionID, language, subject, 0, 1);
-                } else {
-                    new User(chatID, questionID, language, subject, 1, 0);
+        if(isLike) {
+            log.info("staring rate");
+            rate(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "likes");
+        } else {
+            rate(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "muscle");
+        }
+    }
+
+    private void rate(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
+        String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
+        Object test = JsonPath.read(document, jsonPath);
+        String value = test.toString();
+        log.info(value);
+        if(value.equals("[1]")) {
+            JsonPath.parse(document).set(jsonPath, 0);
+            FileWriter writer = new FileWriter(file);
+            writer.write(document.toString());
+            writer.close();
+            log.info("question " + substitute + " down");
+        } else if(value.equals("[0]")) {
+            JsonPath.parse(document).set(jsonPath, 1);
+            FileWriter writer = new FileWriter(file);
+            writer.write(document.toString());
+            writer.close();
+            log.info("question " + substitute + " up");
+        } else if(value.equals("[]")) {
+            while(spliterator.tryAdvance((n) -> {
+                switch (substitute) {
+                    case "like":
+                        if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 0, 1));
+                        break;
+                    case "muscle":
+                        if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 1, 0));
+                        break;
                 }
-            }
-        }));
-
-//        User test = new User();
-//        test.idUser = 777777;
-//        test.ratedQuestions.add(new Question(1, "java", "oop", 77, 1775));
-//
-//        User test2 = new User();
-//        test2.idUser = 65654;
-//        test2.ratedQuestions.add(new Question(1, "java", "oop", 45, 47));
-//
-//        List<User> testList = new ArrayList<>();
-//        testList.add(test);
-//        testList.add(test2);
-//        objectMapper.writeValue(new File(USERS), testList);
-//        List<User> userList = objectMapper.readValue(new File(USERS), new TypeReference<List<User>>() {});
-//        String json = USERS;
-//        DocumentContext jsonContent = JsonPath.parse(json);
-//        String targetPath = "$.user";
-//        jsonContent.set(targetPath, 100);
-//        jsonContent.set(targetPath, 100);
-        return true;
-    }
-
-    private void rate(String file, int questionID, boolean isLike) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
-        Spliterator<Question> spliterator = questions.spliterator();
-        if (isLike) {
-            while(spliterator.tryAdvance((n) -> {
-                if (n.getId() == questionID) n.setLikes(n.getLikes() + 1);
             }));
-        } else {
-            while(spliterator.tryAdvance((n) -> {
-                if (n.getId() == questionID) n.setDifficulty(n.getDifficulty() + 1);
-            }));
+            objectMapper.writeValue(file, usersList);
+            log.info("question " + substitute + " up + registered");
         }
-        objectMapper.writeValue(new File(file), questions);
-    }
-
-    private void underRate(String file, int questionID, boolean isLike) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
-        Spliterator<Question> spliterator = questions.spliterator();
-        if (isLike) {
-            while(spliterator.tryAdvance((n) -> {
-                if (n.getId() == questionID) n.setLikes(n.getLikes() - 1);
-            }));
-        } else {
-            while(spliterator.tryAdvance((n) -> {
-                if (n.getId() == questionID) n.setDifficulty(n.getDifficulty() - 1);
-            }));
-        }
-        objectMapper.writeValue(new File(file), questions);
     }
 
     @Override

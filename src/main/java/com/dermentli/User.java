@@ -18,8 +18,8 @@ public class User {
         this.idUser = idUser;
     }
 
-    public User(long idUser, int id, String language, String subject, int difficulty, int likes) {
+    public User(long idUser, int id, String language, String subject, int muscle, int likes) {
         this.idUser = idUser;
-        ratedQuestions.add(new Question(id, language, subject, difficulty, likes));
+        ratedQuestions.add(new Question(id, language, subject, muscle, likes));
     }
 }
