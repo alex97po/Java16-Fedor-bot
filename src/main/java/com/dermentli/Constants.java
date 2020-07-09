@@ -11,5 +11,8 @@ public class Constants {
 
     public static final String MAIN_MENU_MESSAGE = "Please choose topic";
     public static final String HELP_PAGE = "сердечко - понравился вопрос, мускул - вопрос показался сложным, \"Ответ\" - чтобы увидеть ответ на вопрос";
+    public static final String DEFAULT = "сортировка вопросов по порядку";
+    public static final String LIKES = "сортировка вопросов по лайкам";
+    public static final String MUSCLE = "сортировка вопросов по сложности";
 
 }

@@ -22,5 +22,17 @@
   {
     "name": "Многопоточность",
     "callback": "topic-java-multithreading"
+  },
+  {
+    "name": "ТОП Любимых",
+    "callback": "toplikes"
+  },
+  {
+    "name": "ТОП Сложных",
+    "callback": "topmuscle"
+  },
+  {
+    "name": "По умолчанию",
+    "callback": "default"
   }
 ]

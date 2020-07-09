@@ -62,6 +62,7 @@ public class Bot extends TelegramLongPollingBot {
         } else if (update.hasCallbackQuery()) {
             String[] callbackData = update.getCallbackQuery().getData().split("-");
             chatID = update.getCallbackQuery().getMessage().getChatId();
+            String sortingWay = "default";
             switch (callbackData[0]) {
                 // Show topics
                 case "language":
@@ -75,7 +76,7 @@ public class Bot extends TelegramLongPollingBot {
                     language = callbackData[1];
                     subject = callbackData[2];
                     file = String.format(QUESTIONS, language, subject);
-                    getQuestion(file, 1,"likes", chatID);
+                    getQuestion(file, 1,sortingWay, chatID);
                     break;
                 case "next":
                     language = callbackData[3];
@@ -96,6 +97,17 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 case "help":
                     getMessage(HELP_PAGE, null, chatID);
+                    break;
+                case "default":
+                    getMessage(DEFAULT, null, chatID);
+                    break;
+                case "toplikes":
+                    getMessage(LIKES, null, chatID);
+                    sortingWay = "likes";
+                    break;
+                case "topmuscle":
+                    getMessage(MUSCLE, null, chatID);
+                    sortingWay = "muscle";
                     break;
                 case "stop":
                     BotSession session = ApiContext.getInstance(BotSession.class);
