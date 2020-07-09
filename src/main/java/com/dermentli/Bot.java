@@ -32,6 +32,7 @@ import static com.dermentli.Constants.*;
 
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
+    String sortingWay = null;
 
     /** Main method for events to handle
      *
@@ -62,12 +63,11 @@ public class Bot extends TelegramLongPollingBot {
         } else if (update.hasCallbackQuery()) {
             String[] callbackData = update.getCallbackQuery().getData().split("-");
             chatID = update.getCallbackQuery().getMessage().getChatId();
-            String sortingWay = "default";
             switch (callbackData[0]) {
                 // Show topics
                 case "language":
                 case "back":
-                    language = callbackData[1];
+                    language = callbackData[3];
                     file = String.format(TOPICS, language);
                     getMenu(MAIN_MENU_MESSAGE, file, chatID);
                     break;
@@ -102,12 +102,12 @@ public class Bot extends TelegramLongPollingBot {
                     getMessage(DEFAULT, null, chatID);
                     break;
                 case "toplikes":
-                    getMessage(LIKES, null, chatID);
                     sortingWay = "likes";
+                    getMessage(LIKES, null, chatID);
                     break;
                 case "topmuscle":
+                    sortingWay = "muscles";
                     getMessage(MUSCLE, null, chatID);
-                    sortingWay = "muscle";
                     break;
                 case "stop":
                     BotSession session = ApiContext.getInstance(BotSession.class);
@@ -129,6 +129,12 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /**
+     * This is general method to display message to bot
+     * @param text text to display in bot window
+     * @param buttons array of inline buttons to show
+     * @param chatID current user chat identifer
+     */
     private void getMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
         //creating message
         SendMessage message = new SendMessage() // Create a message object object
@@ -142,6 +148,14 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /**
+     * This method is used to generate questions
+     * @param file file with questions/answers
+     * @param questionOrderNumber current question, used while iterating through next button, different from id
+     * @param sorting method of sorting questions
+     * @param chatID current user chat identifer
+     * @throws IOException possible exception
+     */
     private void getQuestion(String file, int questionOrderNumber, String sorting, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
@@ -162,6 +176,15 @@ public class Bot extends TelegramLongPollingBot {
         questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, text, chatID);
     }
 
+    /**
+     * This method is used to generate answer
+     * @param file file with questions/answers
+     * @param questionID the id of question to find answer for
+     * @param questionOrderNumber current question, used while iterating through next button, different from id
+     * @param sorting method of sorting questions
+     * @param chatID current user chat identifer
+     * @throws IOException possible exception
+     */
     private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
@@ -174,6 +197,17 @@ public class Bot extends TelegramLongPollingBot {
         questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, answer, chatID);
     }
 
+    /**
+     * This method generates the TEXT content of question/answer
+     * @param questions list of questions
+     * @param questionOrderNumber current question, used while iterating through next button, different from id
+     * @param objectMapper used to parse json
+     * @param questionID the id of the question
+     * @param sorting method of sorting questions
+     * @param text text to display
+     * @param chatID current user chat identifier
+     * @throws IOException possible exception
+     */
     private void questionBlock(List<Question> questions, int questionOrderNumber, ObjectMapper objectMapper, int questionID, String sorting, String text, long chatID) throws IOException {
         String language = questions.get(questionOrderNumber-1).getLanguage();
         String subject = questions.get(questionOrderNumber-1).getSubject();
@@ -197,6 +231,13 @@ public class Bot extends TelegramLongPollingBot {
         getMessage(text, markupKeyboard, chatID);
     }
 
+    /**
+     * Generated inline keyboards
+     * @param text text to display
+     * @param sButtons file with buttons
+     * @param chatID current user chat identifier
+     * @throws IOException possible exception
+     */
     private void getMenu(String text, String sButtons, long chatID) throws IOException {
         // creating object mapper
         ObjectMapper objectMapper = new ObjectMapper();
@@ -220,6 +261,11 @@ public class Bot extends TelegramLongPollingBot {
         getMessage(text, markupKeyboard, chatID);
     }
 
+    /**
+     * Method to register new users
+     * @param chatID current user chat identifier
+     * @throws IOException possible exception
+     */
     private void registeredUser(long chatID) throws IOException {
         File file = new File(USERS);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -238,6 +284,15 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /**
+     * Checks if user wants to like or muscle question
+     * @param language language
+     * @param subject  topic
+     * @param questionID the id of the question
+     * @param chatID current user chat identifier
+     * @param isLike boolean for like or muscle
+     * @throws IOException possible exception
+     */
     private void ratingAnalyzer(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
         log.info("ratingAnalyzer started");
         ObjectMapper objectMapper = new ObjectMapper();
@@ -254,6 +309,20 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /**
+     * Main rate analyzer, FOR USER SECTION
+     * @param chatID current user chat identifier
+     * @param language language
+     * @param subject topic
+     * @param document the parsed json
+     * @param file file with users
+     * @param spliterator spliterator to iterate through List<User>
+     * @param usersList list of users from ratingAnalyzer
+     * @param questionID the id of the question
+     * @param objectMapper used to parse json
+     * @param substitute is like or muscle
+     * @throws IOException possible exception
+     */
     private void rateProcessing(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
         Object test = JsonPath.read(document, jsonPath);
@@ -329,6 +398,15 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
+    /**
+     * Main rate analyzer, FOR QUESTION SECTION
+     * @param rateUp rate up or down
+     * @param language language
+     * @param subject topic
+     * @param questionID the id of the question
+     * @param isLike like or muscle
+     * @throws IOException possible exception
+     */
     private void rate(boolean rateUp, String language, String subject, int questionID, boolean isLike) throws IOException {
         log.info("rate started");
         String source = String.format(QUESTIONS, language, subject);

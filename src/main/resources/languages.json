@@ -1,22 +1,22 @@
 [
     {
-      "name": "Java",
+      "name": "☕ Java",
       "callback": "language-java"
     },
     {
-      "name": "HTML+CSS",
+      "name": "\uD83C\uDF5F HTML+CSS",
       "callback": "language-html+css"
     },
     {
-      "name": "ReactJS",
+      "name": "⚛ ReactJS",
       "callback": "language-reactjs"
     },
     {
-      "name": "NodeJS",
+      "name": "\uD83D\uDE80 NodeJS",
       "callback": "language-nodejs"
     },
     {
-      "name": "STOP",
+      "name": "\uD83D\uDED1 STOP",
       "callback": "stop"
     }
   ]
