@@ -32,7 +32,7 @@ import static com.dermentli.Constants.*;
 
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
-    String sortingWay = null;
+    String sortingWay = "default";
 
     /** Main method for events to handle
      *
@@ -66,6 +66,10 @@ public class Bot extends TelegramLongPollingBot {
             switch (callbackData[0]) {
                 // Show topics
                 case "language":
+                    language = callbackData[1];
+                    file = String.format(TOPICS, language);
+                    getMenu(MAIN_MENU_MESSAGE, file, chatID);
+                    break;
                 case "back":
                     language = callbackData[3];
                     file = String.format(TOPICS, language);
