@@ -10,6 +10,10 @@ public class User {
     long idUser;
     List<Question> ratedQuestions = new ArrayList<>();
 
+    public User() {
+
+    }
+
     public User(long idUser) {
         this.idUser = idUser;
     }

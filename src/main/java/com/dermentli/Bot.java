@@ -220,8 +220,9 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void registeredUser(long chatID) throws IOException {
+        File file = new File(USERS);
         ObjectMapper objectMapper = new ObjectMapper();
-        List<User> usersList = objectMapper.readValue(new File(USERS), new TypeReference<List<User>>() {});
+        List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
         String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
         Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].idUser";
@@ -230,6 +231,7 @@ public class Bot extends TelegramLongPollingBot {
         if (use.equals("[]")) {
             log.info("Registering new user");
             usersList.add(new User(chatID));
+            objectMapper.writeValue(file, usersList);
         } else {
             log.info("User is already registered");
         }
