@@ -6,6 +6,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -235,13 +236,13 @@ public class Bot extends TelegramLongPollingBot {
         Spliterator<User> spliterator = usersList.spliterator();
         if(isLike) {
             log.info("staring rate");
-            rate(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "likes");
+            rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "likes");
         } else {
-            rate(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "muscle");
+            rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "muscle");
         }
     }
 
-    private void rate(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
+    private void rateProcessing(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
         Object test = JsonPath.read(document, jsonPath);
         String value = test.toString();
@@ -251,27 +252,95 @@ public class Bot extends TelegramLongPollingBot {
             FileWriter writer = new FileWriter(file);
             writer.write(document.toString());
             writer.close();
+            switch (substitute) {
+                case "likes":
+                    try {
+                        rate(false, language, subject, questionID, true);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "muscle":
+                    try {
+                        rate(false, language, subject, questionID, false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
             log.info("question " + substitute + " down");
         } else if(value.equals("[0]")) {
             JsonPath.parse(document).set(jsonPath, 1);
             FileWriter writer = new FileWriter(file);
             writer.write(document.toString());
             writer.close();
+            switch (substitute) {
+                case "likes":
+                    try {
+                        rate(true, language, subject, questionID, true);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "muscle":
+                    try {
+                        rate(true, language, subject, questionID, false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
             log.info("question " + substitute + " up");
         } else if(value.equals("[]")) {
             while(spliterator.tryAdvance((n) -> {
                 switch (substitute) {
-                    case "like":
+                    case "likes":
                         if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 0, 1));
+                        try {
+                            rate(true, language, subject, questionID, true);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case "muscle":
                         if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 1, 0));
+                        try {
+                            rate(true, language, subject, questionID, false);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         break;
                 }
             }));
             objectMapper.writeValue(file, usersList);
             log.info("question " + substitute + " up + registered");
         }
+    }
+
+    private void rate(boolean rateUp, String language, String subject, int questionID, boolean isLike) throws IOException {
+        log.info("rate started");
+        String source = String.format(QUESTIONS, language, subject);
+        log.info(source);
+        File file = new File(source);
+        String jsonPath;
+        String json = new String(Files.readAllBytes(Paths.get(source)), StandardCharsets.UTF_8);
+        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+        if(isLike) {
+            jsonPath = "$.[?(@.id == '" + questionID + "')].likes";
+        } else {
+            jsonPath = "$.[?(@.id == '" + questionID + "')].muscle";
+        }
+        JSONArray oCurrentValueLikes = JsonPath.read(document, jsonPath);
+        int currentValue = (Integer) oCurrentValueLikes.get(0);
+        log.info(String.valueOf(currentValue));
+        if(rateUp) {
+            JsonPath.parse(document).set(jsonPath, currentValue + 1);
+        } else {
+            JsonPath.parse(document).set(jsonPath, currentValue - 1);
+        }
+        FileWriter writer = new FileWriter(file);
+        writer.write(document.toString());
+        writer.close();
     }
 
     @Override
