@@ -1,0 +1,137 @@
+[
+  {
+    "id": 1,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Какие есть модификаторы доступа в Java?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 2,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Что такое package level access?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 3,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Можно ли перегрузить статический метод?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 4,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Что такое внутренние классы? Какие виды внутренних классов вы знаете?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 5,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Что такое интерфейсы-маркеры? Какие интерфейсы-маркеры вы знаете?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 6,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Какая разница между String, StringBuilder, StringBuffer?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 7,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Какие виды потоков ввода-вывода есть в Java?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 8,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Возможно ли при переопределении метода изменить модификатор доступа? Возвращаемый тип? Тип аргумента или количество? Имя аргументов? Порядок, количество или убрать секцию throws?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 9,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Что такое Generics?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 10,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Каким образом передаются переменные в методы, по значению или по ссылке?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 11,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "В чем отличие между поверхностным и глубоким клонированием?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 12,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Чем отличаются слова final, finally, finalize?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 13,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Что такое checked/unchecked exception?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 14,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Опишите работу блока try-catch-finally",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  },
+  {
+    "id": 15,
+    "language": "Java",
+    "subject": "classnmethods",
+    "content": "Всегда ли выполняется блок finally?",
+    "answer": "",
+    "muscle": 0,
+    "likes": 0
+  }
+]
