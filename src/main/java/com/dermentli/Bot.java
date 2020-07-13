@@ -227,13 +227,12 @@ public class Bot extends TelegramLongPollingBot {
      * Returns inline keyboard for menu and question sections
      * @param buttons list of buttons
      * @return InlineKeyboardMarkup
-     * @throws IOException
      */
-    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) throws IOException {
+    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) {
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
         // adding buttons
-        buttons.stream().forEach(button -> {
+        buttons.forEach(button -> {
             // adding row of buttons
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
             // iterating through buttons
@@ -323,55 +322,38 @@ public class Bot extends TelegramLongPollingBot {
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
         Object userRateStatus = JsonPath.read(document, jsonPath);
         String value = userRateStatus.toString();
-        if(value.equals("[1]")) {
-            JsonPath.parse(document).set(jsonPath, 0);
-            FileWriter writer = new FileWriter(file);
-            writer.write(document.toString());
-            writer.close();
-            switch (substitute) {
-                case "likes":
-                    try {
-                        rate(false, language, subject, questionID, true);
-                    } catch (IOException e) {
-                        log.error(e.getMessage());
-                    }
-                    break;
-                case "muscle":
-                    try {
-                        rate(false, language, subject, questionID, false);
-                    } catch (IOException e) {
-                        log.error(e.getMessage());
-                    }
-                    break;
-            }
-            log.info("question " + substitute + " down");
-        } else if(value.equals("[0]")) {
-            JsonPath.parse(document).set(jsonPath, 1);
-            FileWriter writer = new FileWriter(file);
-            writer.write(document.toString());
-            writer.close();
-            switch (substitute) {
-                case "likes":
-                    try {
-                        rate(true, language, subject, questionID, true);
-                    } catch (IOException e) {
-                        log.error(e.getMessage());
-                    }
-                    break;
-                case "muscle":
-                    try {
-                        rate(true, language, subject, questionID, false);
-                    } catch (IOException e) {
-                        log.error(e.getMessage());
-                    }
-                    break;
-            }
-            log.info("question " + substitute + " up");
-        } else if(value.equals("[]")) {
-            while(spliterator.tryAdvance((n) -> {
+        switch (value) {
+            case "[1]": {
+                JsonPath.parse(document).set(jsonPath, 0);
+                FileWriter writer = new FileWriter(file);
+                writer.write(document.toString());
+                writer.close();
                 switch (substitute) {
                     case "likes":
-                        if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 0, 1));
+                        try {
+                            rate(false, language, subject, questionID, true);
+                        } catch (IOException e) {
+                            log.error(e.getMessage());
+                        }
+                        break;
+                    case "muscle":
+                        try {
+                            rate(false, language, subject, questionID, false);
+                        } catch (IOException e) {
+                            log.error(e.getMessage());
+                        }
+                        break;
+                }
+                log.info("question " + substitute + " down");
+                break;
+            }
+            case "[0]": {
+                JsonPath.parse(document).set(jsonPath, 1);
+                FileWriter writer = new FileWriter(file);
+                writer.write(document.toString());
+                writer.close();
+                switch (substitute) {
+                    case "likes":
                         try {
                             rate(true, language, subject, questionID, true);
                         } catch (IOException e) {
@@ -379,7 +361,6 @@ public class Bot extends TelegramLongPollingBot {
                         }
                         break;
                     case "muscle":
-                        if (n.getIdUser() == chatID) n.ratedQuestions.add(new Question(questionID, language, subject, 1, 0));
                         try {
                             rate(true, language, subject, questionID, false);
                         } catch (IOException e) {
@@ -387,9 +368,35 @@ public class Bot extends TelegramLongPollingBot {
                         }
                         break;
                 }
-            }));
-            objectMapper.writeValue(file, usersList);
-            log.info("question " + substitute + " up + registered");
+                log.info("question " + substitute + " up");
+                break;
+            }
+            case "[]":
+                spliterator.tryAdvance((n) -> {
+                    switch (substitute) {
+                        case "likes":
+                            if (n.getIdUser() == chatID)
+                                n.ratedQuestions.add(new Question(questionID, language, subject, 0, 1));
+                            try {
+                                rate(true, language, subject, questionID, true);
+                            } catch (IOException e) {
+                                log.error(e.getMessage());
+                            }
+                            break;
+                        case "muscle":
+                            if (n.getIdUser() == chatID)
+                                n.ratedQuestions.add(new Question(questionID, language, subject, 1, 0));
+                            try {
+                                rate(true, language, subject, questionID, false);
+                            } catch (IOException e) {
+                                log.error(e.getMessage());
+                            }
+                            break;
+                    }
+                }) ;
+                objectMapper.writeValue(file, usersList);
+                log.info("question " + substitute + " up + registered");
+                break;
         }
     }
 
