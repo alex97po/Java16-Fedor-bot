@@ -384,7 +384,7 @@ public class Bot extends TelegramLongPollingBot {
                     switch (substitute) {
                         case "likes":
                             if (n.getIdUser() == chatID)
-                                n.ratedQuestions.add(new Question(questionID, language, subject, 0, 1));
+                                n.getRatedQuestions().add(new Question(questionID, language, subject, 0, 1));
                             try {
                                 rate(true, language, subject, questionID, true);
                             } catch (IOException e) {
@@ -393,7 +393,7 @@ public class Bot extends TelegramLongPollingBot {
                             break;
                         case "muscle":
                             if (n.getIdUser() == chatID)
-                                n.ratedQuestions.add(new Question(questionID, language, subject, 1, 0));
+                                n.getRatedQuestions().add(new Question(questionID, language, subject, 1, 0));
                             try {
                                 rate(true, language, subject, questionID, false);
                             } catch (IOException e) {

@@ -7,8 +7,8 @@ import java.util.List;
 
 @Data
 public class User {
-    long idUser;
-    List<Question> ratedQuestions = new ArrayList<>();
+    private long idUser;
+    private List<Question> ratedQuestions = new ArrayList<>();
 
     public User() {
 
