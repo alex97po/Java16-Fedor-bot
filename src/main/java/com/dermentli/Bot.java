@@ -33,7 +33,8 @@ import static com.dermentli.Constants.*;
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
     private String sortingWay = "default";
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    InlineKeyboardMarkup markupKeyboard;
 
     /** Main method for events to handle
      *
@@ -215,19 +216,36 @@ public class Bot extends TelegramLongPollingBot {
     private void questionBlock(String callbackSuffix, String text, long chatID) throws IOException {
         // reading list of question's buttons from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
+        buttons = buttons.stream()
+                .peek(button -> button.setCallback(button.getCallback() + callbackSuffix))
+                .collect(Collectors.toList());
+        markupKeyboard = createButtonsKeyboard(buttons);
+        sendMessage(text, markupKeyboard, chatID);
+    }
+
+    /**
+     * Returns inline keyboard for menu and question sections
+     * @param buttons list of buttons
+     * @return InlineKeyboardMarkup
+     * @throws IOException
+     */
+    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) throws IOException {
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding row of buttons
-        List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-        // iterating through buttons
-        buttons.stream().forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback() + callbackSuffix)));
-        // adding row to button list
-        buttonsInline.add(buttonsRow);
+        // adding buttons
+        buttons.stream().forEach(button -> {
+            // adding row of buttons
+            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+            // iterating through buttons
+            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
+            // adding row to button list
+            buttonsInline.add(buttonsRow);
+        });
         // creating markup
-        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
+        markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        sendMessage(text, markupKeyboard, chatID);
+        return markupKeyboard;
     }
 
     /**
@@ -237,24 +255,10 @@ public class Bot extends TelegramLongPollingBot {
      * @throws IOException possible exception
      */
     private void getMenu(String sButtons, long chatID) throws IOException {
-        // creating object mapper
-        objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
-        // creating buttons list
-        List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // iterating through buttons
-        buttons.stream().forEach(button -> {
-            // adding row of buttons
-            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
-            // adding row to button list
-            buttonsInline.add(buttonsRow);
-        });
-        // creating markup
-        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
-        // setting buttons list to our markup
-        markupKeyboard.setKeyboard(buttonsInline);
+        createButtonsKeyboard(buttons);
+        markupKeyboard = createButtonsKeyboard(buttons);
         sendMessage(MAIN_MENU_MESSAGE, markupKeyboard, chatID);
     }
 
@@ -265,7 +269,6 @@ public class Bot extends TelegramLongPollingBot {
      */
     private void registerUser(long chatID) throws IOException {
         File file = new File(USERS);
-        objectMapper = new ObjectMapper();
         List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
         boolean userExist = usersList.stream().anyMatch(user -> user.getIdUser() == chatID);
         if (!userExist) {
@@ -288,7 +291,6 @@ public class Bot extends TelegramLongPollingBot {
      */
     private void ratingAnalyzer(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
         log.info("ratingAnalyzer started");
-        objectMapper = new ObjectMapper();
         File file = new File(USERS);
         List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
         String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
