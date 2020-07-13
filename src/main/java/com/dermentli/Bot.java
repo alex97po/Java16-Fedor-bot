@@ -32,7 +32,8 @@ import static com.dermentli.Constants.*;
 
 @Slf4j
 public class Bot extends TelegramLongPollingBot {
-    String sortingWay = "default";
+    private String sortingWay = "default";
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     /** Main method for events to handle
      *
@@ -54,8 +55,8 @@ public class Bot extends TelegramLongPollingBot {
             if (updMessage.equals("/start")) {
                 chatID = update.getMessage().getChatId();
                 // register new user
-                registeredUser(chatID);
-                getMenu(MAIN_MENU_MESSAGE, LANGUAGE_MENU, chatID);
+                registerUser(chatID);
+                getMenu(LANGUAGE_MENU, chatID);
             } else if (updMessage.equals("STOP")) {
                 BotSession session = ApiContext.getInstance(BotSession.class);
                 session.stop();
@@ -68,12 +69,12 @@ public class Bot extends TelegramLongPollingBot {
                 case "language":
                     language = callbackData[1];
                     file = String.format(TOPICS, language);
-                    getMenu(MAIN_MENU_MESSAGE, file, chatID);
+                    getMenu(file, chatID);
                     break;
                 case "back":
                     language = callbackData[3];
                     file = String.format(TOPICS, language);
-                    getMenu(MAIN_MENU_MESSAGE, file, chatID);
+                    getMenu(file, chatID);
                     break;
                 // Show question
                 case "topic":
@@ -100,18 +101,18 @@ public class Bot extends TelegramLongPollingBot {
                     getAnswer(file, questionID, questionOrderNumber, sorting, chatID);
                     break;
                 case "help":
-                    getMessage(HELP_PAGE, null, chatID);
+                    sendMessage(HELP_PAGE, null, chatID);
                     break;
                 case "default":
-                    getMessage(DEFAULT, null, chatID);
+                    sendMessage(DEFAULT, null, chatID);
                     break;
                 case "toplikes":
                     sortingWay = "likes";
-                    getMessage(LIKES, null, chatID);
+                    sendMessage(LIKES, null, chatID);
                     break;
                 case "topmuscle":
                     sortingWay = "muscles";
-                    getMessage(MUSCLE, null, chatID);
+                    sendMessage(MUSCLE, null, chatID);
                     break;
                 case "stop":
                     BotSession session = ApiContext.getInstance(BotSession.class);
@@ -139,7 +140,7 @@ public class Bot extends TelegramLongPollingBot {
      * @param buttons array of inline buttons to show
      * @param chatID current user chat identifer
      */
-    private void getMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
+    private void sendMessage(String text, InlineKeyboardMarkup buttons, long chatID) {
         //creating message
         SendMessage message = new SendMessage() // Create a message object object
                 .setChatId(chatID)
@@ -148,7 +149,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 
@@ -161,8 +162,6 @@ public class Bot extends TelegramLongPollingBot {
      * @throws IOException possible exception
      */
     private void getQuestion(String file, int questionOrderNumber, String sorting, long chatID) throws IOException {
-        // creating object mapper
-        ObjectMapper objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
         List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
         // changing sorting based on order desire
@@ -176,8 +175,11 @@ public class Bot extends TelegramLongPollingBot {
         }
 
         String text = questions.get(questionOrderNumber-1).getContent();
+        String language = questions.get(questionOrderNumber-1).getLanguage();
+        String subject = questions.get(questionOrderNumber-1).getSubject();
         int questionID = questions.get(questionOrderNumber-1).getId();
-        questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, text, chatID);
+        String callbackSuffix = String.format("-%s-%s-%s-%s-%s", questionID, questionOrderNumber, language, subject, sorting);
+        questionBlock(callbackSuffix, text, chatID);
     }
 
     /**
@@ -190,79 +192,70 @@ public class Bot extends TelegramLongPollingBot {
      * @throws IOException possible exception
      */
     private void getAnswer(String file, int questionID, int questionOrderNumber, String sorting, long chatID) throws IOException {
-        // creating object mapper
-        ObjectMapper objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
         List<Question> questions = objectMapper.readValue(new File(file), new TypeReference<List<Question>>(){});
-        List<Question> question = questions.stream()
+        Question question = questions.stream()
                 .filter(line -> line.getId() == questionID)
-                .collect(Collectors.toList());
-        String answer = question.get(0).getAnswer();
-        questionBlock(questions, questionOrderNumber, objectMapper, questionID, sorting, answer, chatID);
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Question not found by id: " + questionID));
+        String answer = question.getAnswer();
+        String language = questions.get(questionOrderNumber-1).getLanguage();
+        String subject = questions.get(questionOrderNumber-1).getSubject();
+        String callbackSuffix = String.format("-%s-%s-%s-%s-%s", questionID, questionOrderNumber, language, subject, sorting);
+        questionBlock(callbackSuffix, answer, chatID);
     }
 
     /**
      * This method generates the TEXT content of question/answer
-     * @param questions list of questions
-     * @param questionOrderNumber current question, used while iterating through next button, different from id
-     * @param objectMapper used to parse json
-     * @param questionID the id of the question
-     * @param sorting method of sorting questions
+     * @param callbackSuffix list of callback data necessary for buttons
      * @param text text to display
      * @param chatID current user chat identifier
      * @throws IOException possible exception
      */
-    private void questionBlock(List<Question> questions, int questionOrderNumber, ObjectMapper objectMapper, int questionID, String sorting, String text, long chatID) throws IOException {
-        String language = questions.get(questionOrderNumber-1).getLanguage();
-        String subject = questions.get(questionOrderNumber-1).getSubject();
+    private void questionBlock(String callbackSuffix, String text, long chatID) throws IOException {
         // reading list of question's buttons from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding iterator for buttons
-        Spliterator<Button> spliterator = buttons.spliterator();
         // adding row of buttons
         List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-        while(spliterator.tryAdvance((n) -> {
-            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback() + "-" + questionID + "-" + questionOrderNumber + "-" + language + "-" + subject + "-" + sorting));
-        }));
+        // iterating through buttons
+        buttons.stream().forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback() + callbackSuffix)));
         // adding row to button list
         buttonsInline.add(buttonsRow);
         // creating markup
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        getMessage(text, markupKeyboard, chatID);
+        sendMessage(text, markupKeyboard, chatID);
     }
 
     /**
      * Generated inline keyboards
-     * @param text text to display
      * @param sButtons file with buttons
      * @param chatID current user chat identifier
      * @throws IOException possible exception
      */
-    private void getMenu(String text, String sButtons, long chatID) throws IOException {
+    private void getMenu(String sButtons, long chatID) throws IOException {
         // creating object mapper
-        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper();
         // reading list of objects from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding iterator for buttons
-        Spliterator<Button> spliterator = buttons.spliterator();
-        while(spliterator.tryAdvance((n) -> {
+        // iterating through buttons
+        buttons.stream().forEach(button -> {
             // adding row of buttons
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttonsRow.add(new InlineKeyboardButton().setText(n.getName()).setCallbackData(n.getCallback()));
+            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
             // adding row to button list
             buttonsInline.add(buttonsRow);
-        }));
+        });
         // creating markup
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
         markupKeyboard.setKeyboard(buttonsInline);
-        getMessage(text, markupKeyboard, chatID);
+        sendMessage(MAIN_MENU_MESSAGE, markupKeyboard, chatID);
     }
 
     /**
@@ -270,16 +263,12 @@ public class Bot extends TelegramLongPollingBot {
      * @param chatID current user chat identifier
      * @throws IOException possible exception
      */
-    private void registeredUser(long chatID) throws IOException {
+    private void registerUser(long chatID) throws IOException {
         File file = new File(USERS);
-        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper();
         List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
-        String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
-        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
-        String jsonPath = "$.[?(@.idUser == '" + chatID + "')].idUser";
-        Object test = JsonPath.read(document, jsonPath);
-        String value = test.toString();
-        if (value.equals("[]")) {
+        boolean userExist = usersList.stream().anyMatch(user -> user.getIdUser() == chatID);
+        if (!userExist) {
             log.info("Registering new user");
             usersList.add(new User(chatID));
             objectMapper.writeValue(file, usersList);
@@ -299,16 +288,17 @@ public class Bot extends TelegramLongPollingBot {
      */
     private void ratingAnalyzer(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
         log.info("ratingAnalyzer started");
-        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper();
         File file = new File(USERS);
         List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
         String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
         Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
         Spliterator<User> spliterator = usersList.spliterator();
         if(isLike) {
-            log.info("staring rate");
+            log.info("proceeding to likes rating");
             rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "likes");
         } else {
+            log.info("proceeding to muscle rating");
             rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "muscle");
         }
     }
@@ -329,9 +319,8 @@ public class Bot extends TelegramLongPollingBot {
      */
     private void rateProcessing(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
         String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
-        Object test = JsonPath.read(document, jsonPath);
-        String value = test.toString();
-        log.info(value);
+        Object userRateStatus = JsonPath.read(document, jsonPath);
+        String value = userRateStatus.toString();
         if(value.equals("[1]")) {
             JsonPath.parse(document).set(jsonPath, 0);
             FileWriter writer = new FileWriter(file);
@@ -342,14 +331,14 @@ public class Bot extends TelegramLongPollingBot {
                     try {
                         rate(false, language, subject, questionID, true);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                     break;
                 case "muscle":
                     try {
                         rate(false, language, subject, questionID, false);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                     break;
             }
@@ -364,14 +353,14 @@ public class Bot extends TelegramLongPollingBot {
                     try {
                         rate(true, language, subject, questionID, true);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                     break;
                 case "muscle":
                     try {
                         rate(true, language, subject, questionID, false);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error(e.getMessage());
                     }
                     break;
             }
@@ -384,7 +373,7 @@ public class Bot extends TelegramLongPollingBot {
                         try {
                             rate(true, language, subject, questionID, true);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            log.error(e.getMessage());
                         }
                         break;
                     case "muscle":
@@ -392,7 +381,7 @@ public class Bot extends TelegramLongPollingBot {
                         try {
                             rate(true, language, subject, questionID, false);
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            log.error(e.getMessage());
                         }
                         break;
                 }
@@ -414,7 +403,6 @@ public class Bot extends TelegramLongPollingBot {
     private void rate(boolean rateUp, String language, String subject, int questionID, boolean isLike) throws IOException {
         log.info("rate started");
         String source = String.format(QUESTIONS, language, subject);
-        log.info(source);
         File file = new File(source);
         String jsonPath;
         String json = new String(Files.readAllBytes(Paths.get(source)), StandardCharsets.UTF_8);
@@ -426,7 +414,6 @@ public class Bot extends TelegramLongPollingBot {
         }
         JSONArray oCurrentValueLikes = JsonPath.read(document, jsonPath);
         int currentValue = (Integer) oCurrentValueLikes.get(0);
-        log.info(String.valueOf(currentValue));
         if(rateUp) {
             JsonPath.parse(document).set(jsonPath, currentValue + 1);
         } else {
