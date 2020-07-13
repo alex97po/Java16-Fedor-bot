@@ -219,27 +219,36 @@ public class Bot extends TelegramLongPollingBot {
         buttons = buttons.stream()
                 .peek(button -> button.setCallback(button.getCallback() + callbackSuffix))
                 .collect(Collectors.toList());
-        markupKeyboard = createButtonsKeyboard(buttons);
+        markupKeyboard = createButtonsKeyboard(buttons, true);
         sendMessage(text, markupKeyboard, chatID);
     }
 
     /**
      * Returns inline keyboard for menu and question sections
      * @param buttons list of buttons
+     * @param singleLine in one line or each from new line
      * @return InlineKeyboardMarkup
      */
-    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) {
+    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons, boolean singleLine) {
         // creating buttons list
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
         // adding buttons
-        buttons.forEach(button -> {
+        if (singleLine) {
+            buttons.forEach(button -> {
+                // adding row of buttons
+                List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+                // iterating through buttons
+                buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
+                // adding row to button list
+                buttonsInline.add(buttonsRow);
+            });
+        } else {
             // adding row of buttons
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            // iterating through buttons
-            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
+            buttons.forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback())));
             // adding row to button list
             buttonsInline.add(buttonsRow);
-        });
+        }
         // creating markup
         markupKeyboard = new InlineKeyboardMarkup();
         // setting buttons list to our markup
@@ -256,8 +265,7 @@ public class Bot extends TelegramLongPollingBot {
     private void getMenu(String sButtons, long chatID) throws IOException {
         // reading list of objects from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
-        createButtonsKeyboard(buttons);
-        markupKeyboard = createButtonsKeyboard(buttons);
+        markupKeyboard = createButtonsKeyboard(buttons, false);
         sendMessage(MAIN_MENU_MESSAGE, markupKeyboard, chatID);
     }
 
