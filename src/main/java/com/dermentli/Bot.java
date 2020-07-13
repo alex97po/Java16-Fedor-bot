@@ -234,6 +234,12 @@ public class Bot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
         // adding buttons
         if (singleLine) {
+            // adding row of buttons
+            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+            buttons.forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback())));
+            // adding row to button list
+            buttonsInline.add(buttonsRow);
+        } else {
             buttons.forEach(button -> {
                 // adding row of buttons
                 List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
@@ -242,12 +248,6 @@ public class Bot extends TelegramLongPollingBot {
                 // adding row to button list
                 buttonsInline.add(buttonsRow);
             });
-        } else {
-            // adding row of buttons
-            List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttons.forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback())));
-            // adding row to button list
-            buttonsInline.add(buttonsRow);
         }
         // creating markup
         markupKeyboard = new InlineKeyboardMarkup();
