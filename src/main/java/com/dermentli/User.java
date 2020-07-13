@@ -1,25 +1,21 @@
 package com.dermentli;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Data
+@NoArgsConstructor
 public class User {
+
     private long idUser;
     private List<Question> ratedQuestions = new ArrayList<>();
-
-    public User() {
-
-    }
 
     public User(long idUser) {
         this.idUser = idUser;
     }
 
-    public User(long idUser, int id, String language, String subject, int muscle, int likes) {
-        this.idUser = idUser;
-        ratedQuestions.add(new Question(id, language, subject, muscle, likes));
-    }
 }

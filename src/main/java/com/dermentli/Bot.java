@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Spliterator;
 import java.util.stream.Collectors;
 
 import static com.dermentli.Constants.*;
@@ -34,7 +33,6 @@ import static com.dermentli.Constants.*;
 public class Bot extends TelegramLongPollingBot {
     private String sortingWay = "default";
     private final ObjectMapper objectMapper = new ObjectMapper();
-    InlineKeyboardMarkup markupKeyboard;
 
     /** Main method for events to handle
      *
@@ -123,13 +121,13 @@ public class Bot extends TelegramLongPollingBot {
                     language = callbackData[3].toLowerCase();
                     subject = callbackData[4];
                     questionID = Integer.parseInt(callbackData[1]);
-                    ratingAnalyzer(language, subject, questionID, chatID, true);
+                    rateProcessing(chatID, language, subject, questionID,true);
                     break;
                 case "muscle":
                     language = callbackData[3].toLowerCase();
                     subject = callbackData[4];
                     questionID = Integer.parseInt(callbackData[1]);
-                    ratingAnalyzer(language, subject, questionID, chatID, false);
+                    rateProcessing(chatID, language, subject, questionID, false);
                     break;
             }
         }
@@ -214,44 +212,22 @@ public class Bot extends TelegramLongPollingBot {
      * @throws IOException possible exception
      */
     private void questionBlock(String callbackSuffix, String text, long chatID) throws IOException {
-        // reading list of question's buttons from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(QUESTION_MENU), new TypeReference<List<Button>>(){});
         buttons = buttons.stream()
                 .peek(button -> button.setCallback(button.getCallback() + callbackSuffix))
                 .collect(Collectors.toList());
-        markupKeyboard = createButtonsKeyboard(buttons, true);
+        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons);
         sendMessage(text, markupKeyboard, chatID);
     }
 
-    /**
-     * Returns inline keyboard for menu and question sections
-     * @param buttons list of buttons
-     * @param singleLine in one line or each from new line
-     * @return InlineKeyboardMarkup
-     */
-    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons, boolean singleLine) {
-        // creating buttons list
+    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) throws IOException {
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        // adding buttons
-        if (singleLine) {
-            // adding row of buttons
+        buttons.stream().forEach(button -> {
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttons.forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback())));
-            // adding row to button list
+            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
             buttonsInline.add(buttonsRow);
-        } else {
-            buttons.forEach(button -> {
-                // adding row of buttons
-                List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-                // iterating through buttons
-                buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
-                // adding row to button list
-                buttonsInline.add(buttonsRow);
-            });
-        }
-        // creating markup
-        markupKeyboard = new InlineKeyboardMarkup();
-        // setting buttons list to our markup
+        });
+        InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         markupKeyboard.setKeyboard(buttonsInline);
         return markupKeyboard;
     }
@@ -263,9 +239,8 @@ public class Bot extends TelegramLongPollingBot {
      * @throws IOException possible exception
      */
     private void getMenu(String sButtons, long chatID) throws IOException {
-        // reading list of objects from JSON array string
         List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
-        markupKeyboard = createButtonsKeyboard(buttons, false);
+        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons);
         sendMessage(MAIN_MENU_MESSAGE, markupKeyboard, chatID);
     }
 
@@ -288,138 +263,74 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     /**
-     * Checks if user wants to like or muscle question
-     * @param language language
-     * @param subject  topic
-     * @param questionID the id of the question
-     * @param chatID current user chat identifier
-     * @param isLike boolean for like or muscle
-     * @throws IOException possible exception
-     */
-    private void ratingAnalyzer(String language, String subject, int questionID, long chatID, boolean isLike) throws IOException {
-        log.info("ratingAnalyzer started");
-        File file = new File(USERS);
-        List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
-        String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
-        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
-        Spliterator<User> spliterator = usersList.spliterator();
-        if(isLike) {
-            log.info("proceeding to likes rating");
-            rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "likes");
-        } else {
-            log.info("proceeding to muscle rating");
-            rateProcessing(chatID, language, subject, document, file, spliterator, usersList, questionID, objectMapper, "muscle");
-        }
-    }
-
-    /**
      * Main rate analyzer, FOR USER SECTION
      * @param chatID current user chat identifier
      * @param language language
      * @param subject topic
-     * @param document the parsed json
-     * @param file file with users
-     * @param spliterator spliterator to iterate through List<User>
-     * @param usersList list of users from ratingAnalyzer
      * @param questionID the id of the question
-     * @param objectMapper used to parse json
-     * @param substitute is like or muscle
      * @throws IOException possible exception
      */
-    private void rateProcessing(long chatID, String language, String subject, Object document, File file, Spliterator<User> spliterator, List<User> usersList, int questionID, ObjectMapper objectMapper, String substitute) throws IOException {
-        String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" + language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." + substitute;
+    private void rateProcessing(long chatID, String language, String subject, int questionID, boolean isLike) throws IOException {
+        File file = new File(USERS);
+        List<User> usersList = objectMapper.readValue(file, new TypeReference<List<User>>() {});
+        String json = new String(Files.readAllBytes(Paths.get(USERS)), StandardCharsets.UTF_8);
+        Object document = Configuration.defaultConfiguration().jsonProvider().parse(json);
+        String jsonPath = "$.[?(@.idUser == '" + chatID + "')].ratedQuestions[?(@.language == '" +
+                language + "' && @.subject == '" + subject + "' && @.id == '" + questionID + "')]." +
+                (isLike ? "like" : "muscle");
         Object userRateStatus = JsonPath.read(document, jsonPath);
         String value = userRateStatus.toString();
         switch (value) {
             case "[1]": {
-                JsonPath.parse(document).set(jsonPath, 0);
-                FileWriter writer = new FileWriter(file);
-                writer.write(document.toString());
-                writer.close();
-                switch (substitute) {
-                    case "likes":
-                        try {
-                            rate(false, language, subject, questionID, true);
-                        } catch (IOException e) {
-                            log.error(e.getMessage());
-                        }
-                        break;
-                    case "muscle":
-                        try {
-                            rate(false, language, subject, questionID, false);
-                        } catch (IOException e) {
-                            log.error(e.getMessage());
-                        }
-                        break;
-                }
-                log.info("question " + substitute + " down");
+                String source = String.format(QUESTIONS, language, subject);
+                changeQuestionRate(false, file, document, jsonPath, source, questionID, isLike);
                 break;
             }
             case "[0]": {
-                JsonPath.parse(document).set(jsonPath, 1);
-                FileWriter writer = new FileWriter(file);
-                writer.write(document.toString());
-                writer.close();
-                switch (substitute) {
-                    case "likes":
-                        try {
-                            rate(true, language, subject, questionID, true);
-                        } catch (IOException e) {
-                            log.error(e.getMessage());
-                        }
-                        break;
-                    case "muscle":
-                        try {
-                            rate(true, language, subject, questionID, false);
-                        } catch (IOException e) {
-                            log.error(e.getMessage());
-                        }
-                        break;
-                }
-                log.info("question " + substitute + " up");
+                String source = String.format(QUESTIONS, language, subject);
+                changeQuestionRate(true, file, document, jsonPath, source, questionID, isLike);
                 break;
             }
             case "[]":
-                spliterator.tryAdvance((n) -> {
-                    switch (substitute) {
-                        case "likes":
-                            if (n.getIdUser() == chatID)
-                                n.getRatedQuestions().add(new Question(questionID, language, subject, 0, 1));
-                            try {
-                                rate(true, language, subject, questionID, true);
-                            } catch (IOException e) {
-                                log.error(e.getMessage());
-                            }
-                            break;
-                        case "muscle":
-                            if (n.getIdUser() == chatID)
-                                n.getRatedQuestions().add(new Question(questionID, language, subject, 1, 0));
-                            try {
-                                rate(true, language, subject, questionID, false);
-                            } catch (IOException e) {
-                                log.error(e.getMessage());
-                            }
-                            break;
+                usersList.stream()
+                        .filter(user -> user.getIdUser() == chatID)
+                        .findAny()
+                        .ifPresent(user -> user.getRatedQuestions().add(new Question(questionID, language, subject,
+                                Math.abs(Boolean.compare(isLike, true)), Boolean.compare(isLike, false))));
+                    try {
+                        rate(true, String.format(QUESTIONS, language, subject), questionID, isLike);
+                    } catch (IOException e) {
+                        log.error(e.getMessage());
                     }
-                }) ;
                 objectMapper.writeValue(file, usersList);
-                log.info("question " + substitute + " up + registered");
+                log.info("question {} up + registered", isLike ? "like" : "muscle");
                 break;
+        }
+    }
+
+    private void changeQuestionRate(boolean rateUp, File file, Object document, String jsonPath,
+                                    String source, int questionID, boolean isLike) {
+        try {
+            JsonPath.parse(document).set(jsonPath, Boolean.compare(rateUp, false));
+            FileWriter writer = new FileWriter(file);
+            writer.write(document.toString());
+            writer.close();
+            rate(rateUp, source, questionID, isLike);
+            log.info("question {} up", isLike ? "like" : "muscle");
+        } catch (IOException e) {
+            log.error(e.getMessage());
         }
     }
 
     /**
      * Main rate analyzer, FOR QUESTION SECTION
      * @param rateUp rate up or down
-     * @param language language
-     * @param subject topic
      * @param questionID the id of the question
      * @param isLike like or muscle
      * @throws IOException possible exception
      */
-    private void rate(boolean rateUp, String language, String subject, int questionID, boolean isLike) throws IOException {
+    private void rate(boolean rateUp, String source, int questionID, boolean isLike) throws IOException {
         log.info("rate started");
-        String source = String.format(QUESTIONS, language, subject);
         File file = new File(source);
         String jsonPath;
         String json = new String(Files.readAllBytes(Paths.get(source)), StandardCharsets.UTF_8);
