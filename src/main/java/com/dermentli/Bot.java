@@ -216,17 +216,23 @@ public class Bot extends TelegramLongPollingBot {
         buttons = buttons.stream()
                 .peek(button -> button.setCallback(button.getCallback() + callbackSuffix))
                 .collect(Collectors.toList());
-        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons);
+        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons, true);
         sendMessage(text, markupKeyboard, chatID);
     }
 
-    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons) throws IOException {
+    private InlineKeyboardMarkup createButtonsKeyboard(List<Button> buttons, boolean singleLine) throws IOException {
         List<List<InlineKeyboardButton>> buttonsInline = new ArrayList<>();
-        buttons.stream().forEach(button -> {
+        if(singleLine) {
             List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
-            buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
+            buttons.stream().forEach(button -> buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback())));
             buttonsInline.add(buttonsRow);
-        });
+        } else {
+            buttons.stream().forEach(button -> {
+                List<InlineKeyboardButton> buttonsRow = new ArrayList<>();
+                buttonsRow.add(new InlineKeyboardButton().setText(button.getName()).setCallbackData(button.getCallback()));
+                buttonsInline.add(buttonsRow);
+            });
+        }
         InlineKeyboardMarkup markupKeyboard = new InlineKeyboardMarkup();
         markupKeyboard.setKeyboard(buttonsInline);
         return markupKeyboard;
@@ -240,7 +246,7 @@ public class Bot extends TelegramLongPollingBot {
      */
     private void getMenu(String sButtons, long chatID) throws IOException {
         List<Button> buttons = objectMapper.readValue(new File(sButtons), new TypeReference<List<Button>>(){});
-        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons);
+        InlineKeyboardMarkup markupKeyboard = createButtonsKeyboard(buttons, false);
         sendMessage(MAIN_MENU_MESSAGE, markupKeyboard, chatID);
     }
 
