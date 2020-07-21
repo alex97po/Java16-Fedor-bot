@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Какая разница между JDK, JVM, JRE?",
     "answer": "",
@@ -10,7 +10,7 @@
   },
   {
     "id": 2,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Что такое Heap и Stack память в Java?",
     "answer": "",
@@ -19,7 +19,7 @@
   },
   {
     "id": 3,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Как работает сборщик мусора в Java?",
     "answer": "",
@@ -28,7 +28,7 @@
   },
   {
     "id": 4,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Что такое классы-загрузчики (ClassLoader)?",
     "answer": "",
@@ -37,7 +37,7 @@
   },
   {
     "id": 5,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Объясните смысл понятия \"пул литералов\"",
     "answer": "",
@@ -46,7 +46,7 @@
   },
   {
     "id": 6,
-    "language": "Java",
+    "language": "java",
     "subject": "structure",
     "content": "Можно ли \"вернуть\" строку в пул литералов?",
     "answer": "",

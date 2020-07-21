@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "language": "Java",
+    "language": "java",
     "subject": "primitives",
     "content": "Что такое приведение типов? Какие виды приведения есть в Java?",
     "answer": "",
@@ -10,7 +10,7 @@
   },
   {
     "id": 2,
-    "language": "Java",
+    "language": "java",
     "subject": "primitives",
     "content": "Какие примитивные типы есть в Java?",
     "answer": "",
@@ -19,7 +19,7 @@
   },
   {
     "id": 3,
-    "language": "Java",
+    "language": "java",
     "subject": "primitives",
     "content": "Что такое Autoboxing?",
     "answer": "",
