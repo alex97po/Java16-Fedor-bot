@@ -4,7 +4,7 @@
     "language": "java",
     "subject": "structure",
     "content": "Какая разница между JDK, JVM, JRE?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -13,7 +13,7 @@
     "language": "java",
     "subject": "structure",
     "content": "Что такое Heap и Stack память в Java?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -22,7 +22,7 @@
     "language": "java",
     "subject": "structure",
     "content": "Как работает сборщик мусора в Java?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -31,7 +31,7 @@
     "language": "java",
     "subject": "structure",
     "content": "Что такое классы-загрузчики (ClassLoader)?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -39,8 +39,8 @@
     "id": 5,
     "language": "java",
     "subject": "structure",
-    "content": "Объясните смысл понятия \"пул литералов\"",
-    "answer": "",
+    "content": "Объясните смысл понятия \"пул литералов\"anser should be added by admin",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -49,7 +49,7 @@
     "language": "java",
     "subject": "structure",
     "content": "Можно ли \"вернуть\" строку в пул литералов?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   }

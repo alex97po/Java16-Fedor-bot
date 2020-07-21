@@ -4,7 +4,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Какая связь между equals и hashCode?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -13,7 +13,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Чем отличается ArrayList от LinkedList?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -22,7 +22,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Дайте определение понятию iterator",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -31,7 +31,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Что такое fail-fast поведение?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -40,7 +40,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Какая коллекция реализует дисциплину обслуживания FIFO?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -49,7 +49,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Какая коллекция реализует дисциплину обслуживания LIFO?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -58,7 +58,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Как перебрать все ключи Map, учитывая, что Map - не Iterable?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -67,7 +67,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Почему Map - это не Collection, в то время как List, Set являются Collection?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -76,7 +76,7 @@
     "language": "java",
     "subject": "collections",
     "content": "Зачем для множеств enum-ов есть специальный Set? Что это за Set?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   }

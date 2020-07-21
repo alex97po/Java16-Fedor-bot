@@ -4,7 +4,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Какие есть модификаторы доступа в Java?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -13,7 +13,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Что такое package level access?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -22,7 +22,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Можно ли перегрузить статический метод?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -31,7 +31,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Что такое внутренние классы? Какие виды внутренних классов вы знаете?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -40,7 +40,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Что такое интерфейсы-маркеры? Какие интерфейсы-маркеры вы знаете?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -49,7 +49,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Какая разница между String, StringBuilder, StringBuffer?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -58,7 +58,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Какие виды потоков ввода-вывода есть в Java?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -67,7 +67,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Возможно ли при переопределении метода изменить модификатор доступа? Возвращаемый тип? Тип аргумента или количество? Имя аргументов? Порядок, количество или убрать секцию throws?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -76,7 +76,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Что такое Generics?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -85,7 +85,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Каким образом передаются переменные в методы, по значению или по ссылке?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -94,7 +94,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "В чем отличие между поверхностным и глубоким клонированием?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -103,7 +103,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Чем отличаются слова final, finally, finalize?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -112,7 +112,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Что такое checked/unchecked exception?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -121,7 +121,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Опишите работу блока try-catch-finally",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   },
@@ -130,7 +130,7 @@
     "language": "java",
     "subject": "classnmethods",
     "content": "Всегда ли выполняется блок finally?",
-    "answer": "",
+    "answer": "anser should be added by admin",
     "muscle": 0,
     "likes": 0
   }
