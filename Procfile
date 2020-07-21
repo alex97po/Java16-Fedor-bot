@@ -1,0 +1,1 @@
+worker java -jar target/DermentliBot-jar-with-dependencies.jar
